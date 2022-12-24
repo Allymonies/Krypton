@@ -1,4 +1,5 @@
 local Krypton = {
+    __opaque = true,
     node = "https://krist.dev/"
 }
 local Krypton_mt = { __index = Krypton }
@@ -85,6 +86,7 @@ end
 ]]
 
 local KryptonWS = {}
+local KryptonWS_mt = { __index = KryptonWS }
 
 function Krypton:connect()
     if self.ws then
@@ -96,20 +98,10 @@ function Krypton:connect()
     return self.ws
 end
 
-function KryptonWS.new(props)
-    local self = {}
-
-    self.krypton = props.krypton
-    
-    self:connect()
-
-    return self
-end
-
 function KryptonWS:connect()
     local url = self.krypton:startWs(self.krypton.privateKey)
-    self.ws = http.websocket(url.url)
-    self.id = 0
+    self.ws = http.websocket(url)
+    self.id = 1
 end
 
 function KryptonWS:reconnect()
@@ -146,7 +138,7 @@ function KryptonWS:send(type, data)
     data = data or {}
     data.id = self.id
     data.type = type
-    self.ws.send(data)
+    self.ws.send(textutils.serializeJSON(data))
     self.id = self.id + 1
     return self.id - 1
 end
@@ -184,3 +176,15 @@ end
 function KryptonWS:unsubscribe(event)
     return self:send("unsubscribe", {event = event})
 end
+
+function KryptonWS.new(props)
+    local self = setmetatable({}, KryptonWS_mt)
+
+    self.krypton = props.krypton
+    
+    self:connect()
+
+    return self
+end
+
+return Krypton
