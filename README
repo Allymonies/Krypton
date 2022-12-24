@@ -1,0 +1,4 @@
+== Krypton
+
+Krypton is an event-based node-agnostic Krist API library for Lua.
+Krypton makes multi-currency support easy, just create a Krypton instance per currency you would like to support.
