@@ -8,6 +8,14 @@ local Krypton_mt = { __index = Krypton }
     Basic GET and POST requests
 ]]
 
+local function toFormBody(data)
+    local body = ""
+    for k,v in pairs(data) do
+        body = body .. textutils.urlEncode(k) .. "=" .. textutils.urlEncode(v) .. "&"
+    end
+    return body
+end
+
 function Krypton:get(endpoint)
     local url = self.node .. endpoint
     local response, error = http.get(url)
@@ -30,7 +38,7 @@ end
 
 function Krypton:post(endpoint, data)
     local url = self.node .. endpoint
-    local response, error = http.post(url, textutils.serializeJSON(data))
+    local response, error = http.post(url, toFormBody(data))
     if not response then
         error(error, 3)
     end
@@ -74,7 +82,6 @@ function Krypton.new(props)
     props = props or {}
     local self = setmetatable(props, Krypton_mt)
 
-    self.privateKey = nil
     local info = self:getInfo()
     self.currency = info.currency
 
@@ -116,6 +123,7 @@ function KryptonWS:listen()
             -- Didn't get keepalive, reconnect
             self:reconnect()
         end
+        --print((self.krypton.id or self.krypton.node) .. " <- " .. response)
         local data = textutils.unserializeJSON(response)
         local eventType = data.type
         if eventType and eventType == "event" then
