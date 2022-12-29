@@ -116,28 +116,41 @@ function KryptonWS:reconnect()
     self:connect()
 end
 
+function KryptonWS:disconnect()
+    self.ws.close()
+    self.ws = nil
+end
+
 function KryptonWS:listen()
     while true do
-        local response, binary = self.ws.receive(15)
-        if not response then
-            -- Didn't get keepalive, reconnect
-            self:reconnect()
-        end
-        --print((self.krypton.id or self.krypton.node) .. " <- " .. response)
-        local data = textutils.unserializeJSON(response)
-        local eventType = data.type
-        if eventType and eventType == "event" then
-            local event = data
-            event.source = self.krypton.id or self.krypton.node
-            os.queueEvent(event.event, event)
-        elseif not eventType then
-            local event = data
-            event.source = self.krypton.id or self.krypton.node
-            if data.ok then
-                os.queueEvent("krypton_response", event)
-            else
-                os.queueEvent("krypton_error", event)
+        if self.ws then
+            local response, binary = self.ws.receive(15)
+            if not self.ws then
+                -- We've been disconnected, stop listening
+                break
             end
+            if not response then
+                -- Didn't get keepalive, reconnect
+                self:reconnect()
+            end
+            --print((self.krypton.id or self.krypton.node) .. " <- " .. response)
+            local data = textutils.unserializeJSON(response)
+            local eventType = data.type
+            if eventType and eventType == "event" then
+                local event = data
+                event.source = self.krypton.id or self.krypton.node
+                os.queueEvent(event.event, event)
+            elseif not eventType then
+                local event = data
+                event.source = self.krypton.id or self.krypton.node
+                if data.ok then
+                    os.queueEvent("krypton_response", event)
+                else
+                    os.queueEvent("krypton_error", event)
+                end
+            end
+        else
+            sleep(0.1)
         end
     end
 end
