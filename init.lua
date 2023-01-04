@@ -124,17 +124,17 @@ end
 function KryptonWS:listen()
     while true do
         if self.ws then
-            local response, binary = self.ws.receive(15)
-            if not self.ws then
-                -- We've been disconnected, stop listening
-                break
-            end
-            if not response then
-                -- Didn't get keepalive, reconnect
-                self:reconnect()
-            end
-            --print((self.krypton.id or self.krypton.node) .. " <- " .. response)
             local success, err = pcall(function()
+                local response, binary = self.ws.receive(15)
+                if not self.ws then
+                    -- We've been disconnected, stop listening
+                    return "break"
+                end
+                if not response then
+                    -- Didn't get keepalive, reconnect
+                    self:reconnect()
+                end
+                --print((self.krypton.id or self.krypton.node) .. " <- " .. response)
                 local data = textutils.unserializeJSON(response)
                 local eventType = data.type
                 if eventType and eventType == "event" then
@@ -152,8 +152,13 @@ function KryptonWS:listen()
                 end
             end)
 
-            if err then
-                print("Got error parsing response from " .. (self.krypton.id or self.krypton.node))
+            if success and err == "break" then
+                break
+            elseif err then
+                if err == "Terminated" then
+                    break
+                end
+                print("Got error receiving response from " .. (self.krypton.id or self.krypton.node) .. " reconnecting")
                 self:reconnect()
             end
         else
