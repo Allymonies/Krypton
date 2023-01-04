@@ -134,20 +134,27 @@ function KryptonWS:listen()
                 self:reconnect()
             end
             --print((self.krypton.id or self.krypton.node) .. " <- " .. response)
-            local data = textutils.unserializeJSON(response)
-            local eventType = data.type
-            if eventType and eventType == "event" then
-                local event = data
-                event.source = self.krypton.id or self.krypton.node
-                os.queueEvent(event.event, event)
-            elseif not eventType then
-                local event = data
-                event.source = self.krypton.id or self.krypton.node
-                if data.ok then
-                    os.queueEvent("krypton_response", event)
-                else
-                    os.queueEvent("krypton_error", event)
+            local success, err = pcall(function()
+                local data = textutils.unserializeJSON(response)
+                local eventType = data.type
+                if eventType and eventType == "event" then
+                    local event = data
+                    event.source = self.krypton.id or self.krypton.node
+                    os.queueEvent(event.event, event)
+                elseif not eventType then
+                    local event = data
+                    event.source = self.krypton.id or self.krypton.node
+                    if data.ok then
+                        os.queueEvent("krypton_response", event)
+                    else
+                        os.queueEvent("krypton_error", event)
+                    end
                 end
+            end)
+
+            if err then
+                print("Got error parsing response from " .. (self.krypton.id or self.krypton.node))
+                self:reconnect()
             end
         else
             sleep(0.1)
