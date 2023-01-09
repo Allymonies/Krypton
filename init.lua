@@ -62,9 +62,9 @@ end
 
 function Krypton:get(endpoint)
     local url = self.node .. endpoint
-    local response, error = http.get(url)
+    local response, err = http.get(url)
     if not response then
-        error(error, 3)
+        error(err, 3)
     end
     local body = response.readAll()
     response.close()
@@ -82,9 +82,9 @@ end
 
 function Krypton:post(endpoint, data)
     local url = self.node .. endpoint
-    local response, error = http.post(url, toFormBody(data))
+    local response, err = http.post(url, toFormBody(data))
     if not response then
-        error(error, 3)
+        error(err, 3)
     end
     local body = response.readAll()
     response.close()
