@@ -110,7 +110,7 @@ function Krypton:getInfo()
 end
 
 function Krypton:getName(name)
-    return self:get("names/" .. name)
+    return self:get("names/" .. textutils.urlEncode(name))
 end
 
 -- Websocket Endpoints
